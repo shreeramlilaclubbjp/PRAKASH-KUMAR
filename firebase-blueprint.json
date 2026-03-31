@@ -1,0 +1,50 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Stores user preferences and history.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "favorites": { "type": "array", "items": { "type": "string" } },
+        "watchlist": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "title": { "type": "string" },
+              "description": { "type": "string" },
+              "thumbnail": { "type": "string" },
+              "youtubeId": { "type": "string" },
+              "category": { "type": "string" },
+              "genre": { "type": "array", "items": { "type": "string" } },
+              "rating": { "type": "number" },
+              "releaseDate": { "type": "string" }
+            }
+          }
+        },
+        "watchHistory": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "movieId": { "type": "string" },
+              "timestamp": { "type": "number" }
+            }
+          }
+        }
+      },
+      "required": ["uid", "favorites", "watchHistory"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile document."
+    }
+  }
+}
