@@ -1,5 +1,52 @@
 {
   "entities": {
+    "Movie": {
+      "title": "Movie or Series",
+      "description": "Represents a movie or a series in the catalog.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "thumbnail": { "type": "string" },
+        "youtubeId": { "type": "string" },
+        "instagramId": { "type": "string" },
+        "category": { "type": "string", "enum": ["movie", "series"] },
+        "genre": { "type": "array", "items": { "type": "string" } },
+        "rating": { "type": "number" },
+        "releaseDate": { "type": "string" },
+        "isFeatured": { "type": "boolean" },
+        "seasons": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "number": { "type": "number" },
+              "title": { "type": "string" },
+              "trailerId": { "type": "string" },
+              "episodes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string" },
+                    "title": { "type": "string" },
+                    "thumbnail": { "type": "string" },
+                    "youtubeId": { "type": "string" },
+                    "instagramId": { "type": "string" },
+                    "duration": { "type": "string" },
+                    "description": { "type": "string" },
+                    "cast": { "type": "array", "items": { "type": "string" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "required": ["id", "title", "category", "thumbnail"]
+    },
     "UserProfile": {
       "title": "User Profile",
       "description": "Stores user preferences and history.",

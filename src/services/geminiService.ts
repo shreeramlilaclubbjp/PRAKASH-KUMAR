@@ -77,16 +77,23 @@ const FALLBACK_MOVIES: Movie[] = [
   }
 ];
 
-function isQuotaError(error: any): boolean {
+function isRecoverableError(error: any): boolean {
   const errorStr = JSON.stringify(error).toLowerCase();
   return (
     error?.status === "RESOURCE_EXHAUSTED" ||
     error?.code === 429 ||
+    error?.status === "UNKNOWN" ||
+    error?.code === 500 ||
     error?.error?.status === "RESOURCE_EXHAUSTED" ||
     error?.error?.code === 429 ||
+    error?.error?.status === "UNKNOWN" ||
+    error?.error?.code === 500 ||
     errorStr.includes("resource_exhausted") ||
     errorStr.includes("429") ||
-    errorStr.includes("quota")
+    errorStr.includes("quota") ||
+    errorStr.includes("rpc failed") ||
+    errorStr.includes("500") ||
+    errorStr.includes("xhr error")
   );
 }
 
@@ -128,8 +135,8 @@ export async function getRecommendations(userInterests: string[]): Promise<Movie
     setToCache(cacheKey, data);
     return data;
   } catch (error: any) {
-    if (isQuotaError(error)) {
-      console.warn("Gemini API Quota Exceeded. Using fallback data.");
+    if (isRecoverableError(error)) {
+      console.warn("Gemini API Error (Recoverable). Using fallback data.");
       return FALLBACK_MOVIES;
     }
     console.error("Gemini API Error (getRecommendations):", error);
@@ -176,8 +183,8 @@ export async function searchMovies(query: string): Promise<Movie[]> {
     setToCache(cacheKey, data);
     return data;
   } catch (error: any) {
-    if (isQuotaError(error)) {
-      console.warn("Gemini API Quota Exceeded. Using fallback data.");
+    if (isRecoverableError(error)) {
+      console.warn("Gemini API Error (Recoverable). Using fallback data.");
       return FALLBACK_MOVIES.filter(m => 
         m.title.toLowerCase().includes(query.toLowerCase()) || 
         m.genre.some(g => g.toLowerCase().includes(query.toLowerCase()))
@@ -192,6 +199,10 @@ export async function chatWithGemini(history: ChatMessage[], message: string): P
   try {
     const chat = ai.chats.create({
       model: "gemini-3.1-pro-preview",
+      history: history.map(msg => ({
+        role: msg.role === 'user' ? 'user' : 'model',
+        parts: [{ text: msg.text }]
+      })),
       config: {
         systemInstruction: "You are OPRK+ Assistant, a professional OTT platform guide. Help users find movies, series, and sports. Be helpful and professional.",
         thinkingConfig: { thinkingLevel: ThinkingLevel.HIGH }
@@ -201,11 +212,12 @@ export async function chatWithGemini(history: ChatMessage[], message: string): P
     const response = await chat.sendMessage({ message });
     return response.text;
   } catch (error: any) {
-    if (isQuotaError(error)) {
-      console.warn("Gemini API Quota Exceeded. Using fallback message.");
-      return "I'm sorry, I'm currently experiencing high traffic. Please try again in a few minutes. In the meantime, feel free to browse our featured collection!";
+    if (isRecoverableError(error)) {
+      console.warn("Gemini API Error (Recoverable). Using fallback message.");
+      return "I'm sorry, I'm currently experiencing some technical difficulties. Please try again in a few minutes. In the meantime, feel free to browse our featured collection!";
     }
     console.error("Gemini API Error (chatWithGemini):", error);
     return "I'm having trouble connecting right now. Please try again later.";
   }
 }
+

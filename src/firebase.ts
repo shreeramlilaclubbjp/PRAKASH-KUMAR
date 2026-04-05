@@ -15,11 +15,7 @@ export const signInWithGoogle = async () => {
     await signInWithPopup(auth, googleProvider);
   } catch (error: any) {
     console.error('Sign-in error:', error);
-    if (error.code === 'auth/network-request-failed') {
-      alert('Network error: Please check your internet connection or disable any ad-blockers that might be blocking Firebase.');
-    } else {
-      alert(`Sign-in failed: ${error.message}`);
-    }
+    // We log the error, but avoid using alert in an iframe
   }
 };
 export const logout = () => signOut(auth);

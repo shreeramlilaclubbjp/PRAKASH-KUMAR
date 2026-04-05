@@ -12,21 +12,27 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() &&
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        ((exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'user') == 'admin') ||
           (request.auth.token.email == "shreeramlilaclub@gmail.com" && request.auth.token.email_verified == true)); // Default admin
     }
 
     function isValidUser(data) {
-      let allowedFields = ['uid', 'displayName', 'email', 'photoURL', 'favorites', 'watchHistory', 'watchlist', 'role'];
-      return data.keys().hasAll(['uid', 'favorites', 'watchHistory', 'watchlist']) &&
+      let allowedFields = ['uid', 'displayName', 'email', 'photoURL', 'favorites', 'watchHistory', 'watchlist', 'role', 'isPremium', 'subscriptionExpiry', 'subscriptionPlan', 'lastUtr'];
+      // Only require uid as the absolute minimum
+      return data.keys().hasAll(['uid']) &&
              data.keys().hasOnly(allowedFields) &&
              data.uid is string &&
-             data.favorites is list &&
-             data.watchHistory is list &&
-             data.watchlist is list &&
+             (!('favorites' in data) || data.favorites is list) &&
+             (!('watchHistory' in data) || data.watchHistory is list) &&
+             (!('watchlist' in data) || data.watchlist is list) &&
              (!('displayName' in data) || data.displayName is string || data.displayName == null) &&
              (!('email' in data) || data.email is string || data.email == null) &&
              (!('photoURL' in data) || data.photoURL is string || data.photoURL == null) &&
+             (!('isPremium' in data) || data.isPremium is bool) &&
+             (!('subscriptionExpiry' in data) || data.subscriptionExpiry is number) &&
+             (!('subscriptionPlan' in data) || data.subscriptionPlan is string || data.subscriptionPlan == null) &&
+             (!('lastUtr' in data) || data.lastUtr is string) &&
              data.uid == request.auth.uid &&
              (!('role' in data) || data.role == 'user' || isAdmin());
     }
@@ -37,6 +43,11 @@ service cloud.firestore {
       allow update: if (isOwner(userId) && isValidUser(request.resource.data) && 
                        (!('role' in resource.data) || request.resource.data.role == resource.data.role)) || isAdmin();
       allow delete: if isAdmin();
+    }
+
+    match /movies/{movieId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
     
     match /test/{docId} {

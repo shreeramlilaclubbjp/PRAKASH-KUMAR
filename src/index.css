@@ -14,6 +14,12 @@
   }
 }
 
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
